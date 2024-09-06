@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 
 
 // Set up the scene, camera, and renderer
@@ -10,9 +12,21 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // Add basic lighting
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(1, 1, 1).normalize();
+const light = new THREE.AmbientLight(0xffffff, 1);
+light.position.set(10, 10, 10).normalize();
 scene.add(light);
+scene.background = new THREE.Color(0x808080);
+// Create a grid helper for the background (grid size, divisions, and colors)
+const gridHelper = new THREE.GridHelper(100, 100, 0xffffff, 0x000000);
+scene.add(gridHelper);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+
+// Optional: adjust control properties
+controls.enableDamping = true; // Smooth camera movement
+controls.dampingFactor = 0.05;
+controls.screenSpacePanning = false; // Prevents the camera from panning up/down
+controls.maxPolarAngle = Math.PI / 2; // Limit vertical rotation to 90 degrees
 
 // Load the GLTF model
 const loader = new GLTFLoader();
