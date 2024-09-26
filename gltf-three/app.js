@@ -1,55 +1,44 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import {scene, animate, camera} from './scene.js';
+import GUI from 'lil-gui';
+import { nextAction, addMesh } from './meshManager.js';
+
+THREE.Object3D.DEFAULT_MATRIX_AUTO_UPDATE = false;
+THREE.Object3D.DEFAULT_MATRIX_WORLD_AUTO_UPDATE = false;
+
+const materials = [
+  new THREE.MeshBasicMaterial({ color: 0xff0000 }), // Red
+  new THREE.MeshBasicMaterial({ color: 0x00ff00 }), // Green
+  new THREE.MeshBasicMaterial({ color: 0x0000ff }), // Blue
+  new THREE.MeshBasicMaterial({ color: 0xffff00 }), // Yellow
+  new THREE.MeshBasicMaterial({ color: 0xff00ff }), // Magenta
+  new THREE.MeshBasicMaterial({ color: 0x00ffff })  // Cyan
+];
 
 
+const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials);
+const mesh2 = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), materials);
+mesh2.position.x = 2;
 
-// Set up the scene, camera, and renderer
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+addMesh(mesh);
+addMesh(mesh2);
 
-// Add basic lighting
-const light = new THREE.AmbientLight(0xffffff, 1);
-light.position.set(10, 10, 10).normalize();
-scene.add(light);
-scene.background = new THREE.Color(0x808080);
-// Create a grid helper for the background (grid size, divisions, and colors)
-const gridHelper = new THREE.GridHelper(100, 100, 0xffffff, 0x000000);
-scene.add(gridHelper);
+scene.add(mesh);
+scene.add(mesh2);
 
-const controls = new OrbitControls(camera, renderer.domElement);
 
-// Optional: adjust control properties
-controls.enableDamping = true; // Smooth camera movement
-controls.dampingFactor = 0.05;
-controls.screenSpacePanning = false; // Prevents the camera from panning up/down
-controls.maxPolarAngle = Math.PI / 2; // Limit vertical rotation to 90 degrees
+const gui = new GUI();
+const cameraPositionFolder = gui.addFolder('Buttons');
+// add a button that calls nextPosition
 
-// Load the GLTF model
-const loader = new GLTFLoader();
-loader.load('./cad/powerplant/gltf/power-plant2.gltf', function (gltf) {
-  const model = gltf.scene;
-  scene.add(model);
-
-  // Accessing each child element
-  model.traverse(function (child) {
-    if (child.isMesh) {
-      console.log('Mesh found:', child.name, child);
-    }
-  });
-}, undefined, function (error) {
-  console.error('An error occurred loading the model:', error);
-});
-
-// Position the camera
-camera.position.z = 5;
-
-// Animate the scene
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
+const nextPosition = () => {
+  const [name, position, center] = nextAction.next().value;
+  camera.position.copy(position);
+  camera.lookAt(center);
 }
+
+
+cameraPositionFolder.add({ run: nextPosition }, 'run').name('Next Position');
+
 animate();
+
