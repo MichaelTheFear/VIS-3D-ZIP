@@ -2,47 +2,56 @@ import * as THREE from 'three';
 
 const meshes = [];
 
+//const aspectRatio = window.innerWidth / window.innerHeight;
 
 function addMesh(mesh) {
   mesh.visible = false;
   meshes.push(mesh);
 }
 
-function calculateCameraDistance(mesh, margin = 1.2) {
+function scaleAndCenter(mesh) {
     // Compute the bounding box of the mesh
     const boundingBox = new THREE.Box3().setFromObject(mesh);
-    
+
     // Get the size and center of the bounding box
     const size = new THREE.Vector3();
     boundingBox.getSize(size);
     const center = new THREE.Vector3();
     boundingBox.getCenter(center);
 
-    // Calculate the max dimension and distance based on fixed FOV (75 degrees)
-    const maxDimension = Math.max(size.x, size.y, size.z);
+    const maxDim = Math.max(size.x,size.y,size.z);
 
-    // Adjust the distance with a margin of error (default is 1.2 times the calculated distance)
-    const distance = ((maxDimension / 2) / Math.tan(THREE.MathUtils.degToRad(75) / 2) * margin) * 2;
+    const scaleFactor = 100 / maxDim;
 
-    return { distance, center };
+    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+    mesh.position.set(
+        -center.x * scaleFactor,
+        -center.y * scaleFactor,
+        -center.z * scaleFactor
+    );
+
+    return center;
 }
 
 
 
 function getRandomCameraPosition(mesh) {
-    // Get the distance and center of the mesh
-    const { distance, center } = calculateCameraDistance(mesh);
+    const distance = 120;
 
+    const center = scaleAndCenter(mesh);
+    
     // Generate random spherical coordinates
-    const theta = Math.random() * 2 * Math.PI; // Random angle around Y-axis (0 to 360 degrees)
-    const phi = Math.random() * Math.PI; // Random angle from top to bottom (0 to 180 degrees)
-
+    const theta = 2 * Math.PI; // Random angle around Y-axis (0 to 360 degrees)
+    const phi = Math.PI; // Random angle from top to bottom (0 to 180 degrees)
+    const radius = distance; // Use the distance as the radius
+    
     // Convert spherical coordinates to Cartesian coordinates
-    const x = center.x + distance * Math.sin(phi) * Math.cos(theta);
-    const y = center.y + distance * Math.sin(phi) * Math.sin(theta);
-    const z = center.z + distance * Math.cos(phi);
+    const x = center.x + radius * Math.sin(phi) * Math.cos(theta);
+    const y = center.y + radius * Math.sin(phi) * Math.sin(theta);
+    const z = center.z + radius * Math.cos(phi);
 
-    return { pos : new THREE.Vector3(x, y, z) , center } ;
+    return { pos: new THREE.Vector3(x, y, z), center };
 }
 
 
@@ -82,17 +91,23 @@ function generateCameraPositionsAroundObject(mesh) {
 
 function* nextGeneratorAction(){
     let mesh;
+    const numberOfPhotosPerObj = 8;
+
 
     for(let i = meshes.length - 1; i >= 0; i--){
         mesh = meshes[i];
         mesh.visible = true;
-        const [positions, center] = generateCameraPositionsAroundObject(mesh);
-        console.log(positions);
-
-        for(let j = 0; j < positions.length; j++){
-            yield [mesh.name, positions[j], center];
+        //const [positions, center] = generateCameraPositionsAroundObject(mesh);
+        
+        for(let k = 0; k < numberOfPhotosPerObj; k++){
+            const [positions, center] = generateCameraPositionsAroundObject(mesh);
+            for(let j = 0; j < positions.length; j++){
+                yield [`${mesh.name}_${k}_${j}`, positions[j], center];
+            }
         }
-        console.log(mesh)
+        
+       yield [`${mesh.name}`, positions[0] , center];
+       
         if(mesh.geometry) mesh.geometry.dispose();
         if (mesh.material) {
             if (Array.isArray(mesh.material)) {
@@ -101,7 +116,9 @@ function* nextGeneratorAction(){
               mesh.material.dispose();
             }
           }
+        mesh.visible = false;
     }
+    yield [".", [], {x: 0, y: 0, z: 0}];
 }
 
 const nextAction = nextGeneratorAction();
