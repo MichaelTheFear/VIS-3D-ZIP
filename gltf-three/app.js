@@ -1,9 +1,12 @@
 import * as THREE from 'three';
-import {scene, animate, camera} from './scene.js';
+import {scene, camera} from './scene.js';
 import GUI from 'lil-gui';
 import { nextAction, addMesh } from './meshManager.js';
 import { LoadCad } from './gltf.js';
 
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
 LoadCad(scene);
 
@@ -32,5 +35,10 @@ const nextPhoto = () => {
 
 gui.add({ run: nextPhoto }, 'run').name('Next Photo');
 
-animate();
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+animate(scene, camera);
 

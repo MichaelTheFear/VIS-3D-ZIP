@@ -6,31 +6,35 @@ const meshes = [];
 
 function addMesh(mesh) {
   mesh.visible = false;
+
+  const boundingBox = new THREE.Box3().setFromObject(mesh);
+
+  // Get the size and center of the bounding box
+  const size = new THREE.Vector3();
+  boundingBox.getSize(size);
+  const center = new THREE.Vector3();
+  boundingBox.getCenter(center);
+
+  const maxDim = Math.max(size.x,size.y,size.z);
+
+  const scaleFactor = 100 / maxDim;
+
+  mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+  mesh.position.set(
+      -center.x * scaleFactor,
+      -center.y * scaleFactor,
+      -center.z * scaleFactor
+    );
+
   meshes.push(mesh);
 }
 
-function scaleAndCenter(mesh) {
-    // Compute the bounding box of the mesh
-    const boundingBox = new THREE.Box3().setFromObject(mesh);
+function getCenter(mesh) {
 
-    // Get the size and center of the bounding box
-    const size = new THREE.Vector3();
-    boundingBox.getSize(size);
+    const boundingBox = new THREE.Box3().setFromObject(mesh);
     const center = new THREE.Vector3();
     boundingBox.getCenter(center);
-
-    const maxDim = Math.max(size.x,size.y,size.z);
-
-    const scaleFactor = 100 / maxDim;
-
-    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-    mesh.position.set(
-        -center.x * scaleFactor,
-        -center.y * scaleFactor,
-        -center.z * scaleFactor
-    );
-
     return center;
 }
 
@@ -39,7 +43,7 @@ function scaleAndCenter(mesh) {
 function getRandomCameraPosition(mesh) {
     const distance = 120;
 
-    const center = scaleAndCenter(mesh);
+    const center = getCenter(mesh);
     
     // Generate random spherical coordinates
     const theta = 2 * Math.PI; // Random angle around Y-axis (0 to 360 degrees)
@@ -97,8 +101,7 @@ function* nextGeneratorAction(){
     for(let i = meshes.length - 1; i >= 0; i--){
         mesh = meshes[i];
         mesh.visible = true;
-        //const [positions, center] = generateCameraPositionsAroundObject(mesh);
-        
+
         for(let k = 0; k < numberOfPhotosPerObj; k++){
             const [positions, center] = generateCameraPositionsAroundObject(mesh);
             for(let j = 0; j < positions.length; j++){
@@ -106,7 +109,6 @@ function* nextGeneratorAction(){
             }
         }
         
-       yield [`${mesh.name}`, positions[0] , center];
        
         if(mesh.geometry) mesh.geometry.dispose();
         if (mesh.material) {
@@ -116,6 +118,8 @@ function* nextGeneratorAction(){
               mesh.material.dispose();
             }
           }
+
+          
         mesh.visible = false;
     }
     yield [".", [], {x: 0, y: 0, z: 0}];
