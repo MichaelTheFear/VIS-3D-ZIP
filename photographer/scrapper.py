@@ -9,7 +9,7 @@ def main():
         page = context.new_page()
         
         # Navigate to your website
-        page.goto("http://localhost:5173/")  # Replace with your actual website URL
+        page.goto("http://localhost:4173/")  # Replace with your actual website URL
 
         # Wait for 1 minute to allow the page to load completely
         print("Waiting for 1:30 minute to let the page load completely...")

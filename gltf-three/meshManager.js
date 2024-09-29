@@ -27,6 +27,12 @@ function addMesh(mesh) {
       -center.z * scaleFactor
     );
 
+  mesh.updateMatrix();
+  mesh.updateMatrixWorld(true);
+
+  mesh.matrixAutoUpdate = false;
+  mesh.matrixWorldAutoUpdate = false;
+
   meshes.push(mesh);
 }
 
