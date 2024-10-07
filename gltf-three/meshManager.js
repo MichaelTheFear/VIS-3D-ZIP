@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
-const meshes = [];
+import { boxSize, distance, repeats, startsAt } from './constants';
 
-//const aspectRatio = window.innerWidth / window.innerHeight;
+const meshes = [];
 
 function addMesh(mesh) {
   mesh.visible = false;
@@ -17,7 +17,7 @@ function addMesh(mesh) {
 
   const maxDim = Math.max(size.x,size.y,size.z);
 
-  const scaleFactor = 100 / maxDim;
+  const scaleFactor = boxSize / maxDim;
 
   mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
@@ -47,68 +47,74 @@ function getCenter(mesh) {
 
 
 function getRandomCameraPosition(mesh) {
-    const distance = 120;
+  const center = getCenter(mesh); // Get the center of the mesh
 
-    const center = getCenter(mesh);
-    
-    // Generate random spherical coordinates
-    const theta = 2 * Math.PI; // Random angle around Y-axis (0 to 360 degrees)
-    const phi = Math.PI; // Random angle from top to bottom (0 to 180 degrees)
-    const radius = distance; // Use the distance as the radius
-    
-    // Convert spherical coordinates to Cartesian coordinates
-    const x = center.x + radius * Math.sin(phi) * Math.cos(theta);
-    const y = center.y + radius * Math.sin(phi) * Math.sin(theta);
-    const z = center.z + radius * Math.cos(phi);
+  // Array of 8 octants in 3D space (combining signs for X, Y, Z)
+  const octants = [
+      [1, 1, 1],    // Octant 1 (+X, +Y, +Z)
+      [-1, 1, 1],   // Octant 2 (-X, +Y, +Z)
+      [1, -1, 1],   // Octant 3 (+X, -Y, +Z)
+      [-1, -1, 1],  // Octant 4 (-X, -Y, +Z)
+      [1, 1, -1],   // Octant 5 (+X, +Y, -Z)
+      [-1, 1, -1],  // Octant 6 (-X, +Y, -Z)
+      [1, -1, -1],  // Octant 7 (+X, -Y, -Z)
+      [-1, -1, -1], // Octant 8 (-X, -Y, -Z)
+  ];
 
-    return { pos: new THREE.Vector3(x, y, z), center };
+  // Pick a random octant
+  const randomOctant = octants[Math.floor(Math.random() * octants.length)];
+  
+  // Calculate the random camera position in that octant
+  const x = center.x + randomOctant[0] * distance;
+  const y = center.y + randomOctant[1] * distance;
+  const z = center.z + randomOctant[2] * distance;
+
+  return { pos: new THREE.Vector3(x, y, z), center };
 }
 
 
 function generateCameraPositionsAroundObject(mesh) {
-    // Get the initial random camera position around the mesh
-    const {pos , center} = getRandomCameraPosition(mesh);
+  const center = getCenter(mesh);
 
-    const initialPosition = pos;
+  // Array to store the camera positions
+  const positions = [];
 
-    // Array to store the positions
-    const positions = [];
+  // Array of 8 octants in 3D space (each octant has a combination of signs for X, Y, Z)
+  const octants = [
+      [1, 1, 1],    // Octant 1 (+X, +Y, +Z)
+      [-1, 1, 1],   // Octant 2 (-X, +Y, +Z)
+      [1, -1, 1],   // Octant 3 (+X, -Y, +Z)
+      [-1, -1, 1],  // Octant 4 (-X, -Y, +Z)
+      [1, 1, -1],   // Octant 5 (+X, +Y, -Z)
+      [-1, 1, -1],  // Octant 6 (-X, +Y, -Z)
+      [1, -1, -1],  // Octant 7 (+X, -Y, -Z)
+      [-1, -1, -1], // Octant 8 (-X, -Y, -Z)
+  ];
 
-    // Define the rotation axes
-    const axes = [
-        new THREE.Vector3(1, 0, 0), // X-axis
-        new THREE.Vector3(0, 1, 0), // Y-axis
-        new THREE.Vector3(0, 0, 1), // Z-axis
-    ];
+  // Loop through each octant and calculate the camera position
+  octants.forEach((octant) => {
+      const x = center.x + octant[0] * distance;
+      const y = center.y + octant[1] * distance;
+      const z = center.z + octant[2] * distance;
+      
+      positions.push(new THREE.Vector3(x, y, z));
+  });
 
-    // Generate the 90-degree rotations
-    // Rotate around each axis in both directions (+/-)
-    for (let i = 0; i < axes.length; i++) {
-        const axis = axes[i];
-        
-        // +90 degrees rotation
-        let position = initialPosition.clone().sub(center).applyAxisAngle(axis, Math.PI / 2).add(center);
-        positions.push(position);
-
-        // -90 degrees rotation
-        position = initialPosition.clone().sub(center).applyAxisAngle(axis, -Math.PI / 2).add(center);
-        positions.push(position);
-    }
-
-    return [positions, center];
+  return [positions, center];
 }
+
 
 
 function* nextGeneratorAction(){
     let mesh;
-    const numberOfPhotosPerObj = 8;
+    const numberOfPhotosPerObj = repeats;
 
 
-    for(let i = meshes.length - 1; i >= 0; i--){
+    for(let i = meshes.length - startsAt - 1; i >= 0; i--){
         mesh = meshes[i];
         mesh.visible = true;
 
-        for(let k = 0; k < numberOfPhotosPerObj; k++){
+        for(let k = 0; k < (numberOfPhotosPerObj); k++){
             const [positions, center] = generateCameraPositionsAroundObject(mesh);
             for(let j = 0; j < positions.length; j++){
                 yield [`${mesh.name}_${k}_${j}`, positions[j], center];

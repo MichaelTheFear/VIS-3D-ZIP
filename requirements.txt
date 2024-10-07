@@ -1,4 +1,0 @@
-PyOpenGL
-tensorflow
-numpy
-keras
