@@ -42,9 +42,9 @@ function animate() {
 animate();
 */
 
-LoadCad(scene);
-
 function nextPhoto() {
+  // get next camera position to render
+
   const [name, position, center] = nextAction.next().value;
   camera.position.copy(position);
   camera.lookAt(center);
@@ -59,6 +59,7 @@ function capturePhoto(pixels) {
 }
 
 function start() {
+  LoadCad(scene);
   waitForModelLoad().then(() => {
     captureBatchOfPhotos(nextPhoto, capturePhoto);
   });

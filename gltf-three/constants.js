@@ -1,3 +1,5 @@
+//File to contain all main constants for the project (maybe put it into a json file later)
+
 export const height = 256;
 export const width = height;
 export const distance = 120;

@@ -1,17 +1,21 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { addMesh } from './meshManager.js';
 
-let modelLoaded = 0;
+
+let modelLoaded = false;
 
 export async function waitForModelLoad() {
-  while (modelLoaded < 66668 ) {
+  // Function to wait for the CAD model to be fully loaded for problems with concurrency
+  while (modelLoaded === false) {
     await new Promise((resolve) => setTimeout(resolve, 100)); // Check every 100ms
   }
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1s more
   console.log('Model is fully loaded. Starting capture...');
 }
 
 export function LoadCad(scene){
-
+    // Function to load the CAD model
+    let counter = 0;
     const loader = new GLTFLoader();
     loader.load('./cad/planta/planta.glb', function (gltf) {
     const model = gltf.scene;
@@ -19,12 +23,13 @@ export function LoadCad(scene){
 
     model.traverse(function (child) {
       if (child.isMesh) {
-        //change the color to white
         child.material.color.set(0xffffff);
         addMesh(child);
-        modelLoaded++;
+        if(counter >= 66668) modelLoaded = true;
+        if(counter % 1000 === 0) console.log(`Model loaded percentage: ${counter/66668*100}%`);
+        counter++;
       }
     });
-  }, undefined, function (error) {
+  }, () => modelLoaded=false, function (error) {
   });
 }
