@@ -1,4 +1,5 @@
-import { width, height, batchSize, startsAt } from "./constants";
+import { width, height, batchSize } from "./constants";
+import { meshCounting } from "./meshManager";
 const pixels = new Uint8Array(width * height * 4); // RGBA for each pixel
 
 export async function captureBatchOfPhotos(nextPhoto, capturePhoto) {
@@ -8,7 +9,6 @@ export async function captureBatchOfPhotos(nextPhoto, capturePhoto) {
   let photoCount = 0;
   let name;
 
-  csvData += `name,${Array.from({ length: width * height }, (_, i) => `pixel${i}`).join(',')}\n`;
 
   console.log('Starting capture...');
   do {
@@ -32,10 +32,15 @@ export async function captureBatchOfPhotos(nextPhoto, capturePhoto) {
   console.log('All batches completed!');
 }
 
+function classID(name){
+  name = name.replace(/(_.*)/, '');
+  return Object.keys(meshCounting).indexOf(name);
+}
+
 function capturePixelsToCSV(name) {
   let csvData = name;
 
-  csvData = csvData.replace(/(_.*)/, '');
+  csvData += `,${classID(name)}`;
 
   for (let i = 0; i < pixels.length; i += 4) {
     csvData += `,${pixels[i]/255}`;
@@ -46,6 +51,7 @@ function capturePixelsToCSV(name) {
 function saveCSV(csvData, fileName) {
   //save to csv file
   return new Promise((resolve) => {
+    csvData = `id,name,${Array.from({ length: width * height }, (_, i) => `pixel${i}`).join(',')}\n` + csvData;
     const blob = new Blob([csvData], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

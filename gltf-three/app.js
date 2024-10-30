@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { scene, camera } from './scene.js';
-import { nextAction } from './meshManager.js';
+import { nextAction, meshCounting } from './meshManager.js';
 import { LoadCad, waitForModelLoad } from './gltf.js';
 import { captureBatchOfPhotos } from './photographer.js';
 import { width, height } from './constants';
@@ -11,7 +11,7 @@ const renderTarget = new THREE.WebGLRenderTarget(width, height, {
   type: THREE.UnsignedByteType,
 });
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(121, 0, 0);
+directionalLight.position.set(0, 0, 120);
 renderer.setSize(width, height);
 scene.add(directionalLight);
 document.body.appendChild(renderer.domElement);
