@@ -24,6 +24,13 @@ export function LoadCad(scene){
     model.traverse(function (child) {
       if (child.isMesh) {
         child.material.color.set(0xffffff);
+        if ('metalness' in child.material && 'roughness' in child.material) {
+          child.material.metalness = 0.2; // High metalness for specular reflection
+          child.material.roughness = 0.6; // Low roughness for a shiny surface
+        } else{
+          console.log("This mesh doesng have metalic material",child.name)
+          child.material = new THREE.MeshStandardMaterial({color: 0xffffff, metalness: 0.2, roughness: 0.6});
+        }
         addMesh(child);
         if(counter >= 66668) modelLoaded = true;
         if(counter % 1000 === 0) console.log(`Model loaded percentage: ${counter/66668*100}%`);

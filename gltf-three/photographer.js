@@ -1,16 +1,16 @@
-import { width, height, batchSize } from "./constants";
+import { width, height, batchSize, batchNumber as constantBatchNumber } from "./constants";
 import { meshCounting } from "./meshManager";
 const pixels = new Uint8Array(width * height * 4); // RGBA for each pixel
 
 export async function captureBatchOfPhotos(nextPhoto, capturePhoto) {
   // capture photos in batches and save them to csv files in a async way
-  let batchNumber = 1;
+  let batchNumber = constantBatchNumber + 1;
   let csvData = '';
   let photoCount = 0;
   let name;
 
 
-  console.log('Starting capture...');
+  console.log('Starting capture... at the batch number:', batchNumber);
   do {
     name = nextPhoto();
     capturePhoto(pixels);

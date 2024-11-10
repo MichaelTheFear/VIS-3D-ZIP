@@ -35,9 +35,9 @@ function addMesh(mesh) {
   mesh.matrixAutoUpdate = false;
   mesh.matrixWorldAutoUpdate = false; //optimization
 
-  const meshType = mesh.name.replace(/_.*/, '');
+  const meshType = mesh.name.replace(/_.*/, "");
 
-  if(meshCounting[meshType]){
+  if (meshCounting[meshType]) {
     meshCounting[meshType] += 1;
   } else {
     meshCounting[meshType] = 1;
@@ -94,12 +94,11 @@ function* nextGeneratorAction() {
   for (let i = meshes.length - startsAt - 1; i >= 0; i--) {
     mesh = meshes[i];
     mesh.visible = true;
-    if (!mesh.name.includes("mesh")) {
-      for (let k = 0; k < numberOfPhotosPerObj; k++) {
-        const [positions, center] = generateCameraPositionsAroundObject(mesh);
-        for (let j = 0; j < positions.length; j++) {
-          yield [`${mesh.name}_${k}_${j}`, positions[j], center];
-        }
+
+    for (let k = 0; k < numberOfPhotosPerObj; k++) {
+      const [positions, center] = generateCameraPositionsAroundObject(mesh);
+      for (let j = 0; j < positions.length; j++) {
+        yield [`${mesh.name}_${k}_${j}`, positions[j], center];
       }
     }
 
