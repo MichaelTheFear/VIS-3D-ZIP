@@ -8,3 +8,4 @@ pandas
 notebook
 scikit-learn
 seaborn
+fastparquet
