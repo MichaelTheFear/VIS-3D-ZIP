@@ -8,25 +8,25 @@ export async function captureBatchOfPhotos(nextPhoto, capturePhoto) {
   let csvData = '';
   let photoCount = 0;
   let name;
-
+  let df
 
   console.log('Starting capture... at the batch number:', batchNumber);
   do {
-    name = nextPhoto();
+    [name,df] = nextPhoto();
     capturePhoto(pixels);
     csvData += capturePixelsToCSV(name);
 
     photoCount++;
 
     if (photoCount % batchSize === 0) {
-      await saveCSV(csvData, `photos_${batchNumber}.csv`);
+      await saveCSV(csvData, `${df}_${batchNumber}.csv`);
       batchNumber++;
       csvData = '';
     }
   } while (name !== ".");
 
   if (photoCount % batchSize !== 0) {
-    await saveCSV(csvData, `photos_${batchNumber}.csv`);
+    await saveCSV(csvData, `${df}_${batchNumber}.csv`);
   }
 
   console.log('All batches completed!');

@@ -7,4 +7,4 @@ export const boxSize = 75;
 export const batchSize = 1024;
 export const repeats = 2;
 export const batchNumber = 0;
-export const startsAt = batchSize / (repeats * 8) * batchNumber; 
+export const startsAt = batchSize / (repeats * 8) * batchNumber;

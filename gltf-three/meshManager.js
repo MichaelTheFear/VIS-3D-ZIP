@@ -6,6 +6,12 @@ const meshes = []; // list of all the meshes in the scene
 
 const meshCounting = {};
 
+const meshesIndexes = {};
+
+const test = [];
+const validation = [];
+const train = [];
+
 function addMesh(mesh) {
   // add a new mesh to the list but scaled and hiden
   mesh.visible = false;
@@ -39,8 +45,11 @@ function addMesh(mesh) {
 
   if (meshCounting[meshType]) {
     meshCounting[meshType] += 1;
+    meshesIndexes[meshType].push(meshes.length);
   } else {
     meshCounting[meshType] = 1;
+    meshesIndexes[meshType] = [meshes.length];
+    console.log(meshType);
   }
 
   meshes.push(mesh);
@@ -58,7 +67,6 @@ function generateCameraPositionsAroundObject(mesh) {
   // generate camera positions around the object in all octants randomly
 
   const center = getCenter(mesh);
-  const positions = [];
 
   const octants = [
     [1, 1, 1], // (+X, +Y, +Z)
@@ -71,48 +79,85 @@ function generateCameraPositionsAroundObject(mesh) {
     [-1, -1, -1], // (-X, -Y, -Z)
   ];
 
-  octants.forEach((octant) => {
-    const theta = (Math.random() * Math.PI) / 2;
-    const phi = (Math.random() * Math.PI) / 2;
+  const octant = octants[Math.floor(Math.random() * octants.length)];
+  const theta = (Math.random() * Math.PI) / 2;
+  const phi = (Math.random() * Math.PI) / 2;
 
-    const x = center.x + octant[0] * distance * Math.sin(theta) * Math.cos(phi);
-    const y = center.y + octant[1] * distance * Math.sin(theta) * Math.sin(phi);
-    const z = center.z + octant[2] * distance * Math.cos(theta);
+  const x = center.x + octant[0] * distance * Math.sin(theta) * Math.cos(phi);
+  const y = center.y + octant[1] * distance * Math.sin(theta) * Math.sin(phi);
+  const z = center.z + octant[2] * distance * Math.cos(theta);
 
-    positions.push(new THREE.Vector3(x, y, z));
-  });
+  const position = new THREE.Vector3(x, y, z);
 
-  return [positions, center];
+  return [position, center];
+}
+
+
+function generateNumberOfRepeats(maxSize, numberOfObjects) {
+  const numberOfRepeatsPerObj = {};
+  for (let i = 0; i < numberOfObjects; i++) {
+    const obj = Object.keys(meshCounting)[i];
+    numberOfRepeatsPerObj[obj] = Math.floor(maxSize / meshCounting[obj] || 1); // Prevent division by zero
+  }
+
+  return Object.values(numberOfRepeatsPerObj);
+}
+
+export function generateMeshOrder() {
+  const max = (a, b) => Math.max(a, b);
+  const maxSize = repeats * Object.values(meshCounting).reduce(max, 0);
+
+  const numberOfObjects = Object.keys(meshCounting).length;
+  const totalSize = maxSize * numberOfObjects;
+
+  const trainSize = Math.floor(totalSize * 0.6);
+  const validationSize = Math.floor(totalSize * 0.2);
+  const testSize = Math.floor(totalSize * 0.2);
+
+  const meshesArrays = Object.values(meshesIndexes);
+  const repeatsPerObj = generateNumberOfRepeats(maxSize, numberOfObjects);
+
+  console.log("Sizes", maxSize, trainSize, validationSize, testSize);
+  let j = 0;
+  const addToArray = (size, targetArray) => {
+    for (let i = 0; i < size; i++) {
+      if (numberOfObjects <= j) j = 0;
+      const arrayIndex = Math.min(
+        Math.floor(repeatsPerObj[j] / Math.max(1, i + 1)),
+        meshesArrays[j].length - 1
+      ); // Prevent out-of-bounds access
+      targetArray.push(meshesArrays[j][arrayIndex]);
+      j++;
+    }
+  };
+
+  addToArray(testSize, test);
+  addToArray(validationSize, validation);
+  addToArray(trainSize, train);
 }
 
 function* nextGeneratorAction() {
-  // generator of camera positions around the objects
+  const processArray = function* (array, label) {
+    for (let i = 0; i < array.length; i++) {
+      const index = array[i];
+      const mesh = meshes[index];
+      if (!mesh) {
+        console.warn(`Mesh at index ${index} is undefined.`);
+        continue;
+      }
 
-  let mesh;
-  const numberOfPhotosPerObj = repeats;
+      mesh.visible = true;
 
-  for (let i = meshes.length - startsAt - 1; i >= 0; i--) {
-    mesh = meshes[i];
-    mesh.visible = true;
-
-    for (let k = 0; k < numberOfPhotosPerObj; k++) {
       const [positions, center] = generateCameraPositionsAroundObject(mesh);
-      for (let j = 0; j < positions.length; j++) {
-        yield [`${mesh.name}_${k}_${j}`, positions[j], center];
-      }
-    }
+      yield [`${mesh.name}`, positions, center, label];
 
-    if (mesh.geometry) mesh.geometry.dispose();
-    if (mesh.material) {
-      if (Array.isArray(mesh.material)) {
-        mesh.material.forEach((material) => material.dispose());
-      } else {
-        mesh.material.dispose();
-      }
+      mesh.visible = false;
     }
+  };
 
-    mesh.visible = false;
-  }
+  yield* processArray(test, "test");
+  yield* processArray(validation, "val");
+  yield* processArray(train, "train");
   yield [".", [], { x: 0, y: 0, z: 0 }];
 }
 

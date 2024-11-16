@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { scene, camera } from './scene.js';
-import { nextAction, meshCounting } from './meshManager.js';
+import { nextAction, generateMeshOrder } from './meshManager.js';
 import { LoadCad, waitForModelLoad } from './gltf.js';
 import { captureBatchOfPhotos } from './photographer.js';
 import { width, height } from './constants';
@@ -45,11 +45,11 @@ animate();
 function nextPhoto() {
   // get next camera position to render
 
-  const [name, position, center] = nextAction.next().value;
+  const [name, position, center, df] = nextAction.next().value;
   camera.position.copy(position);
   camera.lookAt(center);
   directionalLight.position.copy(position);
-  return name;
+  return [name, df];
 }
 
 function capturePhoto(pixels) {
@@ -61,6 +61,7 @@ function capturePhoto(pixels) {
 function start() {
   LoadCad(scene);
   waitForModelLoad().then(() => {
+    generateMeshOrder();
     captureBatchOfPhotos(nextPhoto, capturePhoto);
   });
 }
