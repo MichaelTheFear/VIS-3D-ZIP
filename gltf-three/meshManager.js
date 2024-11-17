@@ -119,8 +119,9 @@ export function generateMeshOrder() {
 
   console.log("Sizes", maxSize, trainSize, validationSize, testSize);
   let j = 0;
+  let i = 0;
   const addToArray = (size, targetArray) => {
-    for (let i = 0; i < size; i++) {
+    for (; i < size; i++) {
       if (numberOfObjects <= j) j = 0;
       const arrayIndex = Math.min(
         Math.floor(repeatsPerObj[j] / Math.max(1, i + 1)),
