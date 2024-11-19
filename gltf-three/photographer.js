@@ -4,7 +4,7 @@ const pixels = new Uint8Array(width * height * 4); // RGBA for each pixel
 
 export async function captureBatchOfPhotos(nextPhoto, capturePhoto) {
   // capture photos in batches and save them to csv files in a async way
-  let batchNumber = constantBatchNumber + 1;
+  let batchNumber = 0+1;
   let csvData = '';
   let photoCount = 0;
   let name;
