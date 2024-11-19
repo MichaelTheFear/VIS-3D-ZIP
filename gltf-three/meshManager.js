@@ -103,6 +103,8 @@ function generateNumberOfRepeats(maxSize, numberOfObjects) {
   return Object.values(numberOfRepeatsPerObj);
 }
 
+/*
+
 export function generateMeshOrder() {
   const max = (a, b) => Math.max(a, b);
   const maxSize = repeats * Object.values(meshCounting).reduce(max, 0);
@@ -136,6 +138,39 @@ export function generateMeshOrder() {
   addToArray(testSize, test);
   addToArray(validationSize, validation);
   addToArray(trainSize, train);
+}
+
+*/
+
+export function generateMeshOrder() {
+
+  const totalSize = Object.values(meshCounting).reduce((acc,cur) => acc+cur, 0);
+
+  const trainSize = Math.floor(totalSize * 0.6);
+  const validationSize = Math.floor(totalSize * 0.2);
+  const testSize = Math.floor(totalSize * 0.2);
+
+  const meshesArrays = Object.values(meshesIndexes);
+
+  //console.log("Sizes", maxSize, trainSize, validationSize, testSize);
+  let porcentage = 0;
+  
+  const addToArray = (size, targetArray) => {
+    for(let meshesArr of meshesArrays){
+      let startingPoint = meshesArr.length*porcentage;
+      for(let i = startingPoint; i<startingPoint+size;i++){
+        targetArray.push(meshesArr[i])
+      }
+    }
+    porcentage = size;
+  };
+
+  for(let k = 0 ; k<repeats; k++){
+    porcentage = 0;
+    addToArray(testSize, test);
+    addToArray(validationSize, validation);
+    addToArray(trainSize, train);
+  }
 }
 
 function* nextGeneratorAction() {
