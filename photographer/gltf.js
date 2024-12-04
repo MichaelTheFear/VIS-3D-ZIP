@@ -25,8 +25,8 @@ export function LoadCad(scene){
       if (child.isMesh) {
         child.material.color.set(0xffffff);
         if ('metalness' in child.material && 'roughness' in child.material) {
-          child.material.metalness = 0.2; // High metalness for specular reflection
-          child.material.roughness = 0.6; // Low roughness for a shiny surface
+          child.material.metalness = 0.2;
+          child.material.roughness = 0.6;
         } else{
           console.log("This mesh doesng have metalic material",child.name)
           child.material = new THREE.MeshStandardMaterial({color: 0xffffff, metalness: 0.2, roughness: 0.6});

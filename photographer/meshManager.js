@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { boxSize, distance, repeats, startsAt } from "./constants";
+import { boxSize, distance, repeats, startsAt, stratificationPorcentage } from "./constants";
 
 const meshes = []; // list of all the meshes in the scene
 
@@ -45,10 +45,10 @@ function addMesh(mesh) {
 
   if (meshCounting[meshType]) {
     meshCounting[meshType] += 1;
-    meshesIndexes[meshType].push(meshes.length);
+    meshesIndexes[meshType].push(mesh);
   } else {
     meshCounting[meshType] = 1;
-    meshesIndexes[meshType] = [meshes.length];
+    meshesIndexes[meshType] = [mesh];
     console.log(meshType);
   }
 
@@ -91,7 +91,6 @@ function generateCameraPositionsAroundObject(mesh) {
 
   return [position, center];
 }
-
 
 function generateNumberOfRepeats(maxSize, numberOfObjects) {
   const numberOfRepeatsPerObj = {};
@@ -142,51 +141,55 @@ export function generateMeshOrder() {
 
 */
 
+function splitArray(originalArray, percentage, repeating) {
+  // Validate the percentage
+  if (percentage < 0 || percentage > 100) {
+    throw new Error("Percentage must be between 0 and 100.");
+  }
+
+  // Calculate the number of elements to extract
+  const count = Math.floor((percentage / 100) * originalArray.length);
+
+  const arr = [...originalArray];
+
+  // Split the array
+  const newArray = arr.slice(0, count);
+  const remainingArray = arr.slice(count);
+
+  return [newArray, remainingArray];
+}
+
+
 export function generateMeshOrder() {
+  const eachMeshTypeArr = Object.values(meshesIndexes);
+  const maxSize = Math.max(...eachMeshTypeArr.map((arr) => arr.length));
+  for (let k = 0; k < repeats; k++) {
+    eachMeshTypeArr.forEach((meshesArr) => {
+      const duplicates = meshesArr.length >= maxSize*stratificationPorcentage?  1 : Math.floor(maxSize / meshesArr.length)
 
-  const totalSize = Object.values(meshCounting).reduce((acc,cur) => acc+cur, 0);
+      const [train_meshes, remaining] = splitArray(meshesArr, 60);
+      console.log(train_meshes);
+      console.log(remaining);
+      const [validation_meshes, test_meshes] = splitArray(remaining, 50);
 
-  const trainSize = Math.floor(totalSize * 0.6);
-  const validationSize = Math.floor(totalSize * 0.2);
-  const testSize = Math.floor(totalSize * 0.2);
-
-  const meshesArrays = Object.values(meshesIndexes);
-
-  //console.log("Sizes", maxSize, trainSize, validationSize, testSize);
-  let porcentage = 0;
-  
-  const addToArray = (size, targetArray) => {
-    for(let meshesArr of meshesArrays){
-      let startingPoint = meshesArr.length*porcentage;
-      for(let i = startingPoint; i<startingPoint+size;i++){
-        targetArray.push(meshesArr[i])
+      for (let i = 0; i < duplicates; i++) {
+        train.push(...train_meshes);
+        validation.push(...validation_meshes);
+        test.push(...test_meshes);
       }
-    }
-    porcentage = size;
-  };
-
-  for(let k = 0 ; k<repeats; k++){
-    porcentage = 0;
-    addToArray(testSize, test);
-    addToArray(validationSize, validation);
-    addToArray(trainSize, train);
+    });
   }
 }
 
 function* nextGeneratorAction() {
   const processArray = function* (array, label) {
     for (let i = 0; i < array.length; i++) {
-      const index = array[i];
-      const mesh = meshes[index];
-      if (!mesh) {
-        console.warn(`Mesh at index ${index} is undefined.`);
-        continue;
-      }
+      const mesh = array[i];
 
       mesh.visible = true;
 
       const [positions, center] = generateCameraPositionsAroundObject(mesh);
-      yield [`${mesh.name}`, positions, center, label];
+      yield [`${mesh.name}_${i}`, positions, center, label];
 
       mesh.visible = false;
     }
@@ -195,9 +198,8 @@ function* nextGeneratorAction() {
   yield* processArray(test, "test");
   yield* processArray(validation, "val");
   yield* processArray(train, "train");
-  yield [".", [], { x: 0, y: 0, z: 0 }];
 }
 
 const nextAction = nextGeneratorAction();
 
-export { nextAction, addMesh, meshCounting };
+export { nextAction, addMesh, meshCounting, generateCameraPositionsAroundObject };

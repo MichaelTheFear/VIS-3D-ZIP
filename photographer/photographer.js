@@ -8,7 +8,7 @@ export async function captureBatchOfPhotos(nextPhoto, capturePhoto) {
   let csvData = '';
   let photoCount = 0;
   let name;
-  let df
+  let df;
 
   console.log('Starting capture... at the batch number:', batchNumber);
   do {

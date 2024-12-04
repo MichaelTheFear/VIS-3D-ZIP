@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "lil-gui": "^0.19.2",
+    "numeric": "^1.2.6",
     "three": "^0.168.0"
   }
 }
