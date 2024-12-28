@@ -5,6 +5,7 @@ import { boxSize as scaleFactor, width, height, distance } from "./constants";
 import { scene, camera } from "./scene";
 import { generateCameraPositionsAroundObject } from "./meshManager";
 import numeric from "numeric";
+import axios from "axios";
 
 const classificationResults = {};
 
@@ -19,17 +20,24 @@ renderer.setSize(width, height);
 scene.add(directionalLight);
 document.body.appendChild(renderer.domElement);
 
-let unmatchesOfVertices = 0;
 
+
+async function apiCall(parameters,endpoint){
+  const response = await axios.get(endpoint);
+  return response;
+}
+
+let unmatchesOfVertices = 0;
 function calculateLeastSquaresError(object1, object2) {
   const vertices1 = object1.geometry.attributes.position.array;
   const vertices2 = object2.geometry.attributes.position.array;
 
+  
   if (vertices1.length !== vertices2.length) {
+    unmatchesOfVertices = unmatchesOfVertices + 1;
     throw new Error(
       "Objects must have the same number of vertices for error calculation."
     );
-    unmatchesOfVertices++;
   }
 
   let error = 0;
@@ -160,6 +168,7 @@ loader.load("./cad/planta/planta.glb", async (gltf) => {
 
       // Fake backend classification
       const className = child.name.replace(/(_.*)/, "");
+      //const predName = apiCall("http://localhost:8000/api",grayscalePixels);
 
       // Add the mesh to the classification dictionary
       if (!classificationResults[className]) {
@@ -169,7 +178,7 @@ loader.load("./cad/planta/planta.glb", async (gltf) => {
       try {
         if (classificationResults[className].length > 1) {
           const referenceObject = classificationResults[className][0]; // Use the first object as the reference
-          calculateLinearTransformation(referenceObject,child);
+          //calculateLinearTransformation(referenceObject,child);
           /*
           const transformation = calculateLinearTransformation(
             referenceObject,
@@ -181,7 +190,7 @@ loader.load("./cad/planta/planta.glb", async (gltf) => {
           applyTransformation(transformedObject, transformation);
           */
           // Calculate and print the error
-          const error = calculateLeastSquaresError(transformedObject, child);
+          const error = calculateLeastSquaresError(referenceObject, child);
           console.log(
             `Class: ${className}, Object: ${child.name}, Error: ${error}`
           );
@@ -214,7 +223,7 @@ loader.load("./cad/planta/planta.glb", async (gltf) => {
       child.visible = true;
     }
   });
-  console.log("Impossible by least squares");
+  console.log("Impossible by least squares", unmatchesOfVertices/66669);
   scene.add(root);
 });
 
